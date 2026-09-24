@@ -62,6 +62,7 @@ const useAuthStore = create((set) => ({
         organizations: organizations || [],
       });
     } catch {
+      localStorage.removeItem('accessToken');
       set({
         isLoading: false,
         isAuthenticated: false,
