@@ -88,7 +88,7 @@ export default function WorkloadDashboard() {
                     <div
                       className="avatar avatar-md"
                       style={{
-                        background: item.assignee
+                        background: item.assignee?.name
                           ? `hsl(${item.assignee.name.charCodeAt(0) * 7 % 360}, 60%, 45%)`
                           : 'var(--bg-elevated)',
                       }}

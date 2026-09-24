@@ -13,13 +13,20 @@ const generateRefreshToken = (userId) => {
   return jwt.sign({ id: userId }, config.JWT_REFRESH_SECRET, { expiresIn: config.JWT_REFRESH_EXPIRES_IN });
 };
 
+const getRefreshCookieOptions = () => {
+  const isProd = config.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    path: '/',
+  };
+};
+
 const setRefreshCookie = (res, token) => {
   res.cookie('refreshToken', token, {
-    httpOnly: true,
-    secure: config.NODE_ENV === 'production',
-    sameSite: 'lax',
+    ...getRefreshCookieOptions(),
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    path: '/',
   });
 };
 
@@ -131,7 +138,7 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
  * POST /api/auth/logout
  */
 exports.logout = catchAsync(async (req, res, next) => {
-  res.clearCookie('refreshToken');
+  res.clearCookie('refreshToken', getRefreshCookieOptions());
 
   if (req.user) {
     await User.findByIdAndUpdate(req.user._id, { refreshToken: null });

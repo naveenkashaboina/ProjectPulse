@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
 const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
 const path = require('path');
+const fs = require('fs');
 const config = require('./config/env');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -33,8 +34,16 @@ app.set('trust proxy', 1);
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
+
+const allowedOrigins = config.CORS_ORIGIN.split(',').map((o) => o.trim());
 app.use(cors({
-  origin: config.CORS_ORIGIN,
+  origin: (origin, callback) => {
+    // Allow non-browser requests or matching origins (including Vercel preview/production domains)
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
   credentials: true,
 }));
 app.use(mongoSanitize());
@@ -74,6 +83,18 @@ app.use('/api/labels', labelRoutes);
 app.get('/api/health', (req, res) => {
   res.json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } });
 });
+
+// Serve frontend bundle in production if built (enables unified single-service deployment)
+const clientDistPath = path.join(__dirname, '..', '..', 'client', 'dist');
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 // 404 handler
 app.all('*', (req, res) => {

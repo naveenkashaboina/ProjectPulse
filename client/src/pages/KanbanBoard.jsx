@@ -41,6 +41,17 @@ export default function KanbanBoard() {
   const [draggedTask, setDraggedTask] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
 
+  // Mobile active column view & scroll
+  const [activeMobileColumn, setActiveMobileColumn] = useState('all');
+
+  const scrollToColumn = (colId) => {
+    setActiveMobileColumn(colId);
+    const element = document.getElementById(`kanban-col-${colId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  };
+
   // Filters
   const [filterPriority, setFilterPriority] = useState('');
   const [filterAssignee, setFilterAssignee] = useState('');
@@ -137,29 +148,34 @@ export default function KanbanBoard() {
     setDragOverColumn(null);
   };
 
+  const handleUpdateTaskStatus = async (task, newStatus) => {
+    if (!task || task.status === newStatus) return;
+
+    const oldStatus = task.status;
+
+    // Optimistic update
+    setTasks((prev) =>
+      prev.map((t) => (t._id === task._id ? { ...t, status: newStatus } : t))
+    );
+
+    try {
+      await api.patch(`/tasks/${task._id}/status`, { status: newStatus });
+      addToast({ type: 'success', message: `"${task.title}" moved to ${newStatus}` });
+    } catch (err) {
+      // Rollback on failure
+      setTasks((prev) =>
+        prev.map((t) => (t._id === task._id ? { ...t, status: oldStatus } : t))
+      );
+      addToast({ type: 'error', message: 'Failed to update task status. Reverted.' });
+    }
+  };
+
   const handleDrop = async (e, newStatus) => {
     e.preventDefault();
     setDragOverColumn(null);
 
     if (!draggedTask || draggedTask.status === newStatus) return;
-
-    const oldStatus = draggedTask.status;
-
-    // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) => (t._id === draggedTask._id ? { ...t, status: newStatus } : t))
-    );
-
-    try {
-      await api.patch(`/tasks/${draggedTask._id}/status`, { status: newStatus });
-      addToast({ type: 'success', message: `"${draggedTask.title}" moved to ${newStatus}` });
-    } catch (err) {
-      // Rollback on failure
-      setTasks((prev) =>
-        prev.map((t) => (t._id === draggedTask._id ? { ...t, status: oldStatus } : t))
-      );
-      addToast({ type: 'error', message: 'Failed to update task status. Reverted.' });
-    }
+    await handleUpdateTaskStatus(draggedTask, newStatus);
   };
 
   // Create task
@@ -300,11 +316,40 @@ export default function KanbanBoard() {
         )}
       </div>
 
-      <div className="kanban-board">
+      {/* Mobile Column Navigation Tabs */}
+      <div className="kanban-mobile-tabs">
+        <button
+          type="button"
+          className={`kanban-mobile-tab ${activeMobileColumn === 'all' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveMobileColumn('all');
+            const board = document.getElementById('kanban-board-track');
+            if (board) board.scrollTo({ left: 0, behavior: 'smooth' });
+          }}
+        >
+          <span>All Columns</span>
+          <span className="kanban-tab-count">{filteredTasks.length}</span>
+        </button>
+        {COLUMNS.map((col) => (
+          <button
+            key={col.id}
+            type="button"
+            className={`kanban-mobile-tab ${activeMobileColumn === col.id ? 'active' : ''}`}
+            onClick={() => scrollToColumn(col.id)}
+          >
+            <span className="kanban-column-dot" style={{ background: col.color }}></span>
+            <span>{col.label}</span>
+            <span className="kanban-tab-count">{getColumnTasks(col.id).length}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="kanban-board" id="kanban-board-track">
         {COLUMNS.map((col) => {
           const columnTasks = getColumnTasks(col.id);
           return (
             <div
+              id={`kanban-col-${col.id}`}
               key={col.id}
               className={`kanban-column ${dragOverColumn === col.id ? 'drag-over' : ''}`}
               onDragOver={(e) => handleDragOver(e, col.id)}
@@ -391,6 +436,23 @@ export default function KanbanBoard() {
                           📅 {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
                       )}
+                    </div>
+
+                    {/* Touch / Mobile Quick Move */}
+                    <div className="kanban-card-quick-move" onClick={(e) => e.stopPropagation()}>
+                      <label htmlFor={`quick-move-${task._id}`}>Move:</label>
+                      <select
+                        id={`quick-move-${task._id}`}
+                        value={task.status}
+                        onChange={(e) => handleUpdateTaskStatus(task, e.target.value)}
+                        aria-label={`Change status for ${task.title}`}
+                      >
+                        {COLUMNS.map((colOption) => (
+                          <option key={colOption.id} value={colOption.id}>
+                            {colOption.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 ))}

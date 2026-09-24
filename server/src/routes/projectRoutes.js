@@ -44,7 +44,7 @@ router.get('/:projectId/labels', requireProjectAccess('view'), labelController.g
 router.post('/:projectId/labels', requireProjectAccess('admin'), createLabelValidation, validate, labelController.createLabel);
 
 // Workload
-router.get('/:projectId/workload', requireProjectAccess('manage'), projectController.getWorkload);
+router.get('/:projectId/workload', requireProjectAccess('view'), projectController.getWorkload);
 
 // Activity
 router.get('/:projectId/activity', requireProjectAccess('view'), activityController.getProjectActivity);

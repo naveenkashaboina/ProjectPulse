@@ -330,6 +330,8 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  width: calc(100% - var(--sidebar-width));
 }
 
 .page-content {
@@ -338,6 +340,13 @@
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
+  min-width: 0;
+}
+
+.page-content:has(.kanban-board) {
+  max-width: 100%;
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
 }
 
 .page-header {
@@ -484,6 +493,8 @@
   
   .main-content {
     margin-left: 0;
+    width: 100%;
+    min-width: 0;
   }
   
   .header-hamburger {
@@ -496,6 +507,10 @@
   
   .page-content {
     padding: var(--space-md);
+  }
+
+  .page-content:has(.kanban-board) {
+    padding: var(--space-sm);
   }
   
   .grid-2, .grid-3, .grid-4 {

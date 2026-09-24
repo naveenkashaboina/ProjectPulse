@@ -249,10 +249,16 @@ exports.getWorkload = catchAsync(async (req, res, next) => {
       $project: {
         _id: 0,
         assignee: {
-          _id: '$assignee._id',
-          name: '$assignee.name',
-          email: '$assignee.email',
-          avatar: '$assignee.avatar',
+          $cond: [
+            { $ifNull: ['$assignee._id', false] },
+            {
+              _id: '$assignee._id',
+              name: '$assignee.name',
+              email: '$assignee.email',
+              avatar: '$assignee.avatar',
+            },
+            null,
+          ],
         },
         taskCount: 1,
         totalStoryPoints: 1,
