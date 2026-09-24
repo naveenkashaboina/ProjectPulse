@@ -4,6 +4,7 @@
   "description": "ProjectPulse API Server",
   "main": "src/server.js",
   "scripts": {
+    "build": "echo 'Backend ready'",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed": "node src/seeds/seed.js",
