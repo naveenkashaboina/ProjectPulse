@@ -1,16 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
     <linearGradient id="ppGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#06b6d4"/>
+      <stop offset="0%" stop-color="#d97706"/>
+      <stop offset="45%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#facc15"/>
     </linearGradient>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#78350f" flood-opacity="0.5"/>
     </filter>
   </defs>
   <rect width="64" height="64" rx="16" fill="url(#ppGrad)"/>
   <!-- Bold 'P' Logo -->
   <path d="M18 14h15c7.18 0 13 5.373 13 12s-5.82 12-13 12H26v12h-8V14zm8 17h7c3.314 0 6-2.239 6-5s-2.686-5-6-5h-7v10z" fill="#ffffff" filter="url(#shadow)"/>
   <!-- Pulse Accent Wave -->
-  <path d="M36 48l4-8 5 14 4-9 7 3" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M36 48l4-8 5 14 4-9 7 3" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)"/>
 </svg>
