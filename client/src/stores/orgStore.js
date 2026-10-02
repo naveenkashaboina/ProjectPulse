@@ -8,6 +8,10 @@ const useOrgStore = create((set) => ({
   setCurrentOrg: (org) => set({ currentOrg: org }),
   setCurrentProject: (project) => set({ currentProject: project }),
   setProjectRole: (role) => set({ projectRole: role }),
+  clearProjectContext: () => set({
+    currentProject: null,
+    projectRole: null,
+  }),
   clearOrgContext: () => set({
     currentOrg: null,
     currentProject: null,

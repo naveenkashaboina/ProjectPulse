@@ -87,6 +87,7 @@ export default function App() {
         <Route path="/projects/:projectId/issues/:issueId" element={<IssueDetail />} />
         <Route path="/projects/:projectId/activity" element={<ActivityFeed />} />
         <Route path="/tasks/:taskId" element={<TaskDetail />} />
+        <Route path="/issues/:issueId" element={<IssueDetail />} />
         <Route path="/notifications" element={<NotificationList />} />
       </Route>
 

@@ -57,7 +57,7 @@ exports.createComment = catchAsync(async (req, res, next) => {
           title: 'You were mentioned',
           message: `${req.user.name} mentioned you in a comment`,
           payload: { parentType, parentId, commentBody: commentBody.substring(0, 100) },
-          link: parentType === 'Task' ? `/tasks/${parentId}` : `/issues/${parentId}`,
+          link: parentType === 'Task' ? `/tasks/${parentId}` : `/projects/${parentDoc.project}/issues/${parentId}`,
         });
       }
     }

@@ -8,7 +8,7 @@ const useUiStore = create((set, get) => ({
   closeSidebar: () => set({ sidebarOpen: false }),
 
   addToast: (toast) => set((state) => ({
-    toasts: [...state.toasts, { id: Date.now(), ...toast }],
+    toasts: [...state.toasts, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, ...toast }],
   })),
 
   removeToast: (id) => set((state) => ({

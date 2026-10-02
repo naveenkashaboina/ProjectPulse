@@ -12,7 +12,7 @@ export default function Sidebar() {
   const currentOrg = useOrgStore((state) => state.currentOrg);
   const currentProject = useOrgStore((state) => state.currentProject);
   const setCurrentOrg = useOrgStore((state) => state.setCurrentOrg);
-  const clearOrgContext = useOrgStore((state) => state.clearOrgContext);
+  const clearProjectContext = useOrgStore((state) => state.clearProjectContext);
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const closeSidebar = useUiStore((state) => state.closeSidebar);
 
@@ -23,7 +23,7 @@ export default function Sidebar() {
     const org = organizations.find((o) => o._id === e.target.value);
     if (org) {
       setCurrentOrg(org);
-      clearOrgContext();
+      clearProjectContext();
       navigate(`/orgs/${org._id}/dashboard`);
       closeSidebar();
     }

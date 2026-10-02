@@ -83,9 +83,15 @@ exports.signup = catchAsync(async (req, res, next) => {
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email }).select('+passwordHash');
-  if (!user || !(await user.comparePassword(password))) {
-    return next(new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS'));
+  const normalizedEmail = email ? email.toLowerCase().trim() : email;
+  const user = await User.findOne({ email: normalizedEmail }).select('+passwordHash');
+  if (!user) {
+    return next(new AppError(`No account found with email "${email}". Please check your email or sign up.`, 401, 'USER_NOT_FOUND'));
+  }
+
+  const isPasswordValid = await user.comparePassword(password);
+  if (!isPasswordValid) {
+    return next(new AppError('Incorrect password. Please try again.', 401, 'INVALID_PASSWORD'));
   }
 
   const accessToken = generateAccessToken(user._id);
@@ -100,10 +106,12 @@ exports.login = catchAsync(async (req, res, next) => {
 
   sendResponse(res, 200, {
     user: user.toJSON(),
-    organizations: memberships.map((m) => ({
-      ...m.organization.toObject(),
-      role: m.role,
-    })),
+    organizations: memberships
+      .filter((m) => m.organization)
+      .map((m) => ({
+        ...(m.organization.toObject ? m.organization.toObject() : m.organization),
+        role: m.role,
+      })),
     accessToken,
   });
 });
@@ -156,9 +164,11 @@ exports.getMe = catchAsync(async (req, res, next) => {
 
   sendResponse(res, 200, {
     user: req.user,
-    organizations: memberships.map((m) => ({
-      ...m.organization.toObject(),
-      role: m.role,
-    })),
+    organizations: memberships
+      .filter((m) => m.organization)
+      .map((m) => ({
+        ...(m.organization.toObject ? m.organization.toObject() : m.organization),
+        role: m.role,
+      })),
   });
 });

@@ -49,17 +49,24 @@ export default function LoginPage() {
           <p>Agile Project & Team Collaboration Suite</p>
         </div>
         <form onSubmit={handleSubmit} className="auth-form" noValidate autoComplete="off">
-          <h2>Welcome back</h2>
-          {error && <div className="auth-error">{error}</div>}
+          {error && (
+            <div className="auth-error" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
           <div className="input-group">
             <label htmlFor="email">Email</label>
             <input
               id="email"
               type="email"
-              className={`input ${errors.email ? 'input-error' : ''}`}
+              className={`input ${errors.email || (error && (error.toLowerCase().includes('email') || error.toLowerCase().includes('account'))) ? 'input-error' : ''}`}
               placeholder="Enter your email address"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onChange={(e) => {
+                if (error) clearError();
+                setForm({ ...form, email: e.target.value });
+              }}
               autoComplete="off"
             />
             {errors.email && <span className="error-message">{errors.email}</span>}
@@ -70,10 +77,13 @@ export default function LoginPage() {
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                className={`input ${errors.password ? 'input-error' : ''}`}
+                className={`input ${errors.password || (error && error.toLowerCase().includes('password')) ? 'input-error' : ''}`}
                 placeholder="Enter your password"
                 value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                onChange={(e) => {
+                  if (error) clearError();
+                  setForm({ ...form, password: e.target.value });
+                }}
                 autoComplete="new-password"
               />
               <button
