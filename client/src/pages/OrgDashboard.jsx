@@ -28,6 +28,7 @@ export default function OrgDashboard() {
   const [inviting, setInviting] = useState(false);
 
   const [showTeamModal, setShowTeamModal] = useState(false);
+  const [editingTeam, setEditingTeam] = useState(null);
   const [teamForm, setTeamForm] = useState({ name: '', description: '', lead: '', members: [] });
   const [creatingTeam, setCreatingTeam] = useState(false);
 
@@ -38,6 +39,7 @@ export default function OrgDashboard() {
   const activeOrg = organizations.find((o) => o._id === orgId) || currentOrg;
   const userRole = activeOrg?.role || 'Developer';
   const isAdmin = userRole === 'OrgAdmin';
+  const canEditTeam = userRole === 'OrgAdmin' || userRole === 'ProjectManager';
 
   const fetchData = useCallback(async () => {
     try {
@@ -113,8 +115,27 @@ export default function OrgDashboard() {
     }
   };
 
-  // Create team
-  const handleCreateTeam = async (e) => {
+  // Open modal for creating new team
+  const openCreateTeamModal = () => {
+    setEditingTeam(null);
+    setTeamForm({ name: '', description: '', lead: '', members: [] });
+    setShowTeamModal(true);
+  };
+
+  // Open modal for editing existing team
+  const openEditTeamModal = (team) => {
+    setEditingTeam(team);
+    setTeamForm({
+      name: team.name || '',
+      description: team.description || '',
+      lead: team.lead?._id || team.lead || '',
+      members: team.members ? team.members.map((m) => m._id || m) : [],
+    });
+    setShowTeamModal(true);
+  };
+
+  // Create or Update team
+  const handleSaveTeam = async (e) => {
     e.preventDefault();
     try {
       setCreatingTeam(true);
@@ -124,15 +145,36 @@ export default function OrgDashboard() {
         lead: teamForm.lead || undefined,
         members: teamForm.members,
       };
-      const res = await api.post(`/organizations/${orgId}/teams`, payload);
-      setTeams([...teams, res.data.data]);
+
+      if (editingTeam) {
+        const res = await api.put(`/teams/${editingTeam._id}`, payload);
+        setTeams(teams.map((t) => (t._id === editingTeam._id ? res.data.data : t)));
+        addToast({ type: 'success', message: `Team "${teamForm.name}" updated successfully` });
+      } else {
+        const res = await api.post(`/organizations/${orgId}/teams`, payload);
+        setTeams([...teams, res.data.data]);
+        addToast({ type: 'success', message: `Team "${teamForm.name}" created successfully` });
+      }
+
       setShowTeamModal(false);
+      setEditingTeam(null);
       setTeamForm({ name: '', description: '', lead: '', members: [] });
-      addToast({ type: 'success', message: `Team "${teamForm.name}" created` });
     } catch (err) {
-      addToast({ type: 'error', message: err.response?.data?.error?.message || 'Failed to create team' });
+      addToast({ type: 'error', message: err.response?.data?.error?.message || 'Failed to save team' });
     } finally {
       setCreatingTeam(false);
+    }
+  };
+
+  // Delete team
+  const handleDeleteTeam = async (teamId, teamName) => {
+    if (!window.confirm(`Are you sure you want to delete team "${teamName}"?`)) return;
+    try {
+      await api.delete(`/teams/${teamId}`);
+      setTeams(teams.filter((t) => t._id !== teamId));
+      addToast({ type: 'success', message: `Team "${teamName}" deleted` });
+    } catch (err) {
+      addToast({ type: 'error', message: err.response?.data?.error?.message || 'Failed to delete team' });
     }
   };
 
@@ -303,7 +345,7 @@ export default function OrgDashboard() {
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>Cross-functional groups mapped across projects</p>
           </div>
           {isAdmin && (
-            <button className="btn btn-outline btn-sm" onClick={() => setShowTeamModal(true)}>
+            <button className="btn btn-outline btn-sm" onClick={openCreateTeamModal}>
               + Create Team
             </button>
           )}
@@ -314,7 +356,31 @@ export default function OrgDashboard() {
             <div key={team._id} className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-sm)' }}>
                 <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 600 }}>{team.name}</h3>
-                <span className="badge badge-purple">{team.members?.length || 0} members</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="badge badge-purple">{team.members?.length || 0} members</span>
+                  {canEditTeam && (
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ padding: '2px 6px', fontSize: 13 }}
+                      onClick={() => openEditTeamModal(team)}
+                      title="Edit Team"
+                      aria-label="Edit Team"
+                    >
+                      ✏️
+                    </button>
+                  )}
+                  {isAdmin && (
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ padding: '2px 6px', fontSize: 13, color: 'var(--accent-red)' }}
+                      onClick={() => handleDeleteTeam(team._id, team.name)}
+                      title="Delete Team"
+                      aria-label="Delete Team"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
               </div>
               <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 'var(--space-md)', minHeight: 32 }}>
                 {team.description || 'No description provided'}
@@ -330,7 +396,7 @@ export default function OrgDashboard() {
           {teams.length === 0 && (
             <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
               <p>No teams created yet.</p>
-              {isAdmin && <button className="btn btn-primary btn-sm mt-2" onClick={() => setShowTeamModal(true)}>Create Team</button>}
+              {isAdmin && <button className="btn btn-primary btn-sm mt-2" onClick={openCreateTeamModal}>Create Team</button>}
             </div>
           )}
         </div>
@@ -413,15 +479,15 @@ export default function OrgDashboard() {
         </div>
       )}
 
-      {/* Create Team Modal */}
+      {/* Create / Edit Team Modal */}
       {showTeamModal && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowTeamModal(false)}>
           <div className="modal">
             <div className="modal-header">
-              <h2>Create Functional Team</h2>
+              <h2>{editingTeam ? 'Edit Functional Team' : 'Create Functional Team'}</h2>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowTeamModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleCreateTeam}>
+            <form onSubmit={handleSaveTeam}>
               <div className="modal-body">
                 <div className="input-group">
                   <label>Team Name *</label>
@@ -462,7 +528,7 @@ export default function OrgDashboard() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowTeamModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={creatingTeam}>
-                  {creatingTeam ? 'Creating...' : 'Create Team'}
+                  {creatingTeam ? 'Saving...' : editingTeam ? 'Save Changes' : 'Create Team'}
                 </button>
               </div>
             </form>

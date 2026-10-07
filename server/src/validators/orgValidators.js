@@ -47,7 +47,7 @@ const createTeamValidation = [
     .optional()
     .isArray().withMessage('Members must be an array'),
   body('lead')
-    .optional()
+    .optional({ checkFalsy: true })
     .isMongoId().withMessage('Lead must be a valid user ID'),
 ];
 
@@ -64,7 +64,7 @@ const updateTeamValidation = [
     .optional()
     .isArray().withMessage('Members must be an array'),
   body('lead')
-    .optional()
+    .optional({ checkFalsy: true })
     .isMongoId().withMessage('Lead must be a valid user ID'),
 ];
 
