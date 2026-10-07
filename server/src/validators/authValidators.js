@@ -17,7 +17,7 @@ const signupValidation = [
     .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
     .matches(/[0-9]/).withMessage('Password must contain at least one number'),
   body('organizationName')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isLength({ min: 2, max: 150 }).withMessage('Organization name must be 2-150 characters'),
 ];

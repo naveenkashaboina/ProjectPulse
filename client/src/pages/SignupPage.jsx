@@ -25,6 +25,9 @@ export default function SignupPage() {
       else if (!/[a-z]/.test(form.password)) errs.password = 'Password needs a lowercase letter';
       else if (!/[0-9]/.test(form.password)) errs.password = 'Password needs a number';
     }
+    if (form.organizationName?.trim() && form.organizationName.trim().length < 2) {
+      errs.organizationName = 'Organization name must be at least 2 characters';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -34,7 +37,14 @@ export default function SignupPage() {
     clearError();
     if (!validate()) return;
 
-    const result = await signup(form);
+    const payload = {
+      name: form.name.trim(),
+      email: form.email.trim(),
+      password: form.password,
+      ...(form.organizationName?.trim() ? { organizationName: form.organizationName.trim() } : {}),
+    };
+
+    const result = await signup(payload);
     if (result.success) {
       const org = result.data.organization;
       if (org) {
